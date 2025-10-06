@@ -50,66 +50,81 @@ input { padding: 8px; font-size: 16px; width: 250px; margin: 5px; }
 const scriptURL = "https://script.google.com/macros/s/AKfycbwy4S1MDAJTaKqgMVT1iZQWGYLHZq5ed1GsChYB2Pvxo-eRYDpcKnOu8FpxLmxAbot4/exec";
 
 async function generateCertificate() {
-  const name = document.getElementById("nameInput").value.trim();
-  const mobile = document.getElementById("mobileInput").value.trim();
-  const email = document.getElementById("emailInput").value.trim();
+  try {
+    const name = document.getElementById("nameInput").value.trim();
+    const mobile = document.getElementById("mobileInput").value.trim();
+    const email = document.getElementById("emailInput").value.trim();
 
-  if (!name || !mobile || !email) { alert("कृपया सभी विवरण भरें।"); return; }
+    if (!name || !mobile || !email) { alert("कृपया सभी विवरण भरें।"); return; }
 
-  const now = new Date();
-  const timestamp = now.getFullYear().toString() +
-                    String(now.getMonth()+1).padStart(2,'0') +
-                    String(now.getDate()).padStart(2,'0') +
-                    String(now.getHours()).padStart(2,'0') +
-                    String(now.getMinutes()).padStart(2,'0') +
-                    String(now.getSeconds()).padStart(2,'0');
+    console.log("Inputs OK:", name, mobile, email);
 
-  const referenceNo = `${timestamp}/Ksj/CRT`;
-  document.getElementById("nameText").textContent = name;
-  document.getElementById("refNoText").textContent = "ReferenceNo.-: " + referenceNo;
+    const now = new Date();
+    const timestamp = now.getFullYear().toString() +
+                      String(now.getMonth()+1).padStart(2,'0') +
+                      String(now.getDate()).padStart(2,'0') +
+                      String(now.getHours()).padStart(2,'0') +
+                      String(now.getMinutes()).padStart(2,'0') +
+                      String(now.getSeconds()).padStart(2,'0');
 
-  // Verification URL (encoded in QR)
-  const verificationURL = `https://egovlabksj.github.io/verify?ref=${referenceNo}`;
-  const qrImgSrc = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(verificationURL)}&choe=UTF-8`;
+    const referenceNo = `${timestamp}/Ksj/CRT`;
+    document.getElementById("nameText").textContent = name;
+    document.getElementById("refNoText").textContent = "ReferenceNo.-: " + referenceNo;
 
-  // Convert QR image to Base64
-  const qrImgBase64 = await fetch(qrImgSrc)
-    .then(res => res.blob())
-    .then(blob => new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    }));
+    const verificationURL = `https://egovlabksj.github.io/verify?ref=${referenceNo}`;
+    const qrImgSrc = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(verificationURL)}&choe=UTF-8`;
 
-  document.getElementById("qrCodeContainer").innerHTML = `<img src="${qrImgSrc}" width="100" height="100">`;
-  document.getElementById("certificate").style.display = "block";
-  window.scrollTo(0, document.getElementById("certificate").offsetTop);
+    console.log("QR URL:", qrImgSrc);
 
-  // Send data to Google Sheet
-  fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify({
-      name: name,
-      mobile: mobile,
-      email: email,
-      qrImgSrc: qrImgSrc,
-      qrImgBase64: qrImgBase64
-    }),
-    headers: { "Content-Type": "application/json" },
-    mode: 'no-cors'
-  })
-  .then(() => console.log("Data Sent"))
-  .catch(err => console.error("Error!", err));
+    const qrImgBase64 = await fetch(qrImgSrc)
+      .then(res => res.blob())
+      .then(blob => new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      }));
+
+    document.getElementById("qrCodeContainer").innerHTML = `<img src="${qrImgSrc}" width="100" height="100">`;
+    document.getElementById("certificate").style.display = "block";
+    window.scrollTo(0, document.getElementById("certificate").offsetTop);
+
+    console.log("Certificate displayed");
+
+    // Send all data to Google Sheet
+    fetch(scriptURL, {
+      method: "POST",
+      body: JSON.stringify({
+        name: name,
+        mobile: mobile,
+        email: email,
+        qrImgSrc: qrImgSrc,
+        qrImgBase64: qrImgBase64
+      }),
+      headers: { "Content-Type": "application/json" },
+      mode: 'no-cors'
+    })
+    .then(() => console.log("Data Sent"))
+    .catch(err => console.error("Error sending data!", err));
+
+  } catch (err) {
+    console.error("Error in generateCertificate:", err);
+    alert("कुछ त्रुटि हुई। कृपया console देखें।");
+  }
 }
 
 async function downloadCertificate() {
-  const cert = document.getElementById("certificate");
-  await html2canvas(cert, { scale: 4, useCORS: true }).then(canvas => {
-    const link = document.createElement("a");
-    link.download = "certificate.png";
-    link.href = canvas.toDataURL("image/png", 1.0);
-    link.click();
-  });
+  try {
+    const cert = document.getElementById("certificate");
+    await html2canvas(cert, { scale: 4, useCORS: true }).then(canvas => {
+      const link = document.createElement("a");
+      link.download = "certificate.png";
+      link.href = canvas.toDataURL("image/png", 1.0);
+      link.click();
+    });
+  } catch(err) {
+    console.error("Error downloading certificate:", err);
+    alert("डाउनलोड में त्रुटि हुई।");
+  }
 }
 </script>
 
