@@ -53,9 +53,9 @@ input { padding: 8px; font-size: 16px; width: 250px; margin: 5px; }
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbxq6S-miVISvK8cZyhwodU8bm4Z_8qpA1Y78M7oHw2foMn6ylv7SmTe2wF1O43473iM/exec"; // replace with your Apps Script Web App URL
+const scriptURL = "https://script.google.com/macros/s/AKfycbxq6S-miVISvK8cZyhwodU8bm4Z_8qpA1Y78M7oHw2foMn6ylv7SmTe2wF1O43473iM/exec"; // Replace with your Apps Script Web App URL
 
-function generateCertificate() {
+async function generateCertificate() {
   const name = document.getElementById("nameInput").value.trim();
   const mobile = document.getElementById("mobileInput").value.trim();
   const email = document.getElementById("emailInput").value.trim();
@@ -65,7 +65,7 @@ function generateCertificate() {
     return;
   }
 
-  // Timestamp and reference
+  // Timestamp and reference number
   const now = new Date();
   const timestamp = now.getFullYear().toString() +
                     String(now.getMonth() + 1).padStart(2,'0') +
@@ -78,11 +78,12 @@ function generateCertificate() {
   document.getElementById("nameText").textContent = name;
   document.getElementById("refNoText").textContent = "ReferenceNo.-: " + referenceNo;
 
-  // QR code pointing to verification page
+  // Generate QR code pointing to verification URL
   const verificationURL = `https://egovlabksj.github.io/verify?ref=${referenceNo}`;
   const qrImgSrc = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(verificationURL)}&choe=UTF-8`;
-  document.getElementById("qrCodeContainer").innerHTML = `<img src="${qrImgSrc}" width="100" height="100">`;
 
+  // Display QR on certificate
+  document.getElementById("qrCodeContainer").innerHTML = `<img src="${qrImgSrc}" width="100" height="100">`;
   document.getElementById("certificate").style.display = "block";
   window.scrollTo(0, document.getElementById("certificate").offsetTop);
 
